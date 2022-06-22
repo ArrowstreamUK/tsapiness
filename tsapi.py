@@ -30,6 +30,37 @@ def parse(list_to_parse, obj):
     return list_to_return
 
 
+def flatten_variable(variable, variable_list):
+    if len(variable.looped_variables) > 0 and len(variable.values) > 0:
+        for value in variable.values:
+            _a = variable.to_dict()
+            _a.update(value.to_dict())
+            variable_list.append(_a)
+            for loop_variable in variable.looped_variables:
+                flatten_variable(variable=loop_variable, variable_list=variable_list)
+    elif len(variable.looped_variables) == 0 and len(variable.values) > 0:
+        _a = variable.to_dict()
+        for value in variable.values:
+            _a = variable.to_dict()
+            _a.update(value.to_dict())
+            variable_list.append(_a)
+    elif len(variable.looped_variables) > 0 and len(variable.values) == 0:
+         # check if this is valid
+        pass
+
+    elif len(variable.looped_variables) == 0 and len(variable.values) == 0:
+        _a = variable.to_dict()
+        variable_list.append(_a)
+    else:
+        _a = variable.to_dict()
+        variable_list.append(_a)
+    if len(variable.otherSpecifyVariables) > 0:
+        for osv in variable.otherSpecifyVariables:
+            flatten_variable(variable=osv, variable_list=variable_list)
+
+    return variable_list
+
+
 class Survey:
     def __init__(self, hierarchies=None, name="", title="", interviewCount=0,
                  languages=None, notAsked="", noAnswer="", variables=None,
@@ -47,6 +78,8 @@ class Survey:
         self.sections = parse(self._sections, Section)
         self._languages = languages
         self.languages = parse(self._languages, Language)
+
+
 
     def __str__(self):
         return f'Name: {self.name}, Title {self.title}'
@@ -149,28 +182,47 @@ class Variable:
         self.ordinal = ordinal  # int
         self._type = type  # string
         self.name = name  # string
-        self._label = Label(**label)
+        self._label = label
+        self.label = Label(**label)
         self.use = use  # string
         self.maxResponses = maxResponses  # int
 
         if values is None:
             values = {}
-        self._variable_values = VariableValues(**values)
+        self._variable_values = values
+        self.variable_values = VariableValues(**values)
 
         self._loopedVariables = loopedVariables
         self.looped_variables = parse(self._loopedVariables, Variable)
 
-        #
-        # if self._loopedVariables is not None:
-        #     self.looped_variables = []
-        #     for v in self._loopedVariables:
-        #         looped_variable = Variable(**v)
-        #         self.looped_variables.append(looped_variable)
-        # if otherSpecifyVariables is not None:
-        #     self.otherSpecifyVariables = []
-        #     for osv in otherSpecifyVariables:
-        #         other_specify_variable = OtherSpecifyVariable(**osv)
-        #         self.otherSpecifyVariables.append(other_specify_variable)
+        variable_reference.update({self.ident: self})
+
+
+
+
+    @property
+    def looped_variable_values(self):
+        looped_variable_value_list = []
+        if len(self.values) == 0 | len(self.looped_variables) == 0:
+            return looped_variable_value_list
+
+        for value in self.values:
+            for l_v in self.looped_variables:
+                loop_ref = LoopRef(self.ident, value.ident)
+                l_v = LoopedVariable(ordinal=l_v.ordinal,
+                                     label=l_v._label,
+                                     name=l_v.name,
+                                     ident=l_v.ident,
+                                     type=l_v._type,
+                                     values=l_v._variable_values,
+                                     use=l_v.use,
+                                     maxResponses=l_v.maxResponses,
+                                     loopedVariables=l_v._loopedVariables,
+                                     otherSpecifyVariables=l_v._otherSpecifyVariables,
+                                     loop_ref=loop_ref
+                                     )
+                looped_variable_value_list.append(l_v)
+        return looped_variable_value_list
 
     def __str__(self):
         return f'{self.name}'
@@ -184,53 +236,53 @@ class Variable:
 
     @property
     def alt_labels(self):
-        return self._label.alt_labels
+        return self.label.alt_labels
 
     @property
-    def label(self):
-        return self._label.text
+    def label_text(self):
+        return self.label.text
 
     @property
     def values(self):
         try:
-            return self._variable_values.values
+            return self.variable_values.values
         except:
-            return None
+            return []
 
     @property
     def label_interview(self):
-        return self._label.label_interview
+        return self.label.label_interview
 
     @property
     def label_analysis(self):
-        return self._label.label_analysis
+        return self.label.label_analysis
 
     @property
     def range_from(self):
         _r = ""
-        if self._variable_values._range:
-            _r = self._variable_values.range.range_from
+        if self.variable_values._range:
+            _r = self.variable_values.range.range_from
         return _r
 
     @property
     def range_to(self):
         _r = ""
-        if self._variable_values._range:
-            _r = self._variable_values.range.range_to
+        if self.variable_values._range:
+            _r = self.variable_values.range.range_to
         return _r
 
     def range(self):
         try:
-            return self._variable_values.range
+            return self.variable_values.range
         except:
-            return None
+            return {}
 
     def to_dict(self):
         _dict = {
             'var_name': self.name,
             'variable_name': self.name,
             'variable_ident': self.ident,
-            'variable_label': self.label,
+            'variable_label': self.label_text,
             'variable_type': self.type.name,
             'variable_interview_label': self.label_interview,
             'variable_analysis_label': self.label_analysis,
@@ -389,8 +441,40 @@ class LoopedVariable(Variable):
                          loopedVariables=loopedVariables,
                          otherSpecifyVariables=otherSpecifyVariables)
 
-        self._loop_ref = loop_ref
-        self.loop_ref = parse(self._loop_ref, LoopRef)
+        self.loop_ref = loop_ref
+
+    @property
+    def parent_variable_ident(self):
+        return self.loop_ref.variable_ident
+
+    @property
+    def parent_value_ident(self):
+        return self.loop_ref.value_ident
+
+    def to_dict(self):
+
+        _dict = {
+            'var_name': self.name,
+            'variable_name': self.name,
+            'variable_ident': self.ident,
+            'variable_label': self.label_text,
+            'variable_type': self.type.name,
+            'variable_interview_label': self.label_interview,
+            'variable_analysis_label': self.label_analysis,
+            'parent_variable_label': self.parent_variable_ident,
+            'parent_value_label': self.parent_value_ident,
+
+        }
+        if self.range:
+            _dict['variable_range_from'] = self.range_from
+            _dict['variable_range_to'] = self.range_to
+        return _dict
+
+    def __str__(self):
+        return f'{self.name} - {self.parent_value_ident}'
+
+    def __repr__(self):
+        return f'{self.name} - {self.parent_value_ident}'
 
 
 class Hierarchy:
