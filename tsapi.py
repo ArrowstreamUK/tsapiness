@@ -36,8 +36,9 @@ def flatten_variable(variable, variable_list):
             _a = variable.to_dict()
             _a.update(value.to_dict())
             variable_list.append(_a)
-            for loop_variable in variable.looped_variables:
-                flatten_variable(variable=loop_variable, variable_list=variable_list)
+        for loop_variable in variable.looped_variable_values:
+            flatten_variable(variable=loop_variable,
+                             variable_list=variable_list)
     elif len(variable.looped_variables) == 0 and len(variable.values) > 0:
         _a = variable.to_dict()
         for value in variable.values:
@@ -45,7 +46,7 @@ def flatten_variable(variable, variable_list):
             _a.update(value.to_dict())
             variable_list.append(_a)
     elif len(variable.looped_variables) > 0 and len(variable.values) == 0:
-         # check if this is valid
+        # check if this is valid
         pass
 
     elif len(variable.looped_variables) == 0 and len(variable.values) == 0:
@@ -79,37 +80,15 @@ class Survey:
         self._languages = languages
         self.languages = parse(self._languages, Language)
 
-
-
     def __str__(self):
         return f'Name: {self.name}, Title {self.title}'
 
     def __repr__(self):
         return f'Survey({self.name})'
 
-    def all_variables(self):
-        def get_v(obj, variable_list):
-            try:
-                for a in obj:
-                    variable_list.append(a)
-                    get_v(a.looped_variables, variable_list)
-            except:
-                pass
-            return variable_list
-
-        v = []
-        for section in self.sections:
-            for _v in section.variables:
-                v.append(_v)
-                try:
-                    v = get_v(_v.looped_variables, v)
-                except:
-                    pass
-        return v
-
 
 class Section:
-    def __init__(self, label, variables, *args, **kwargs):
+    def __init__(self, label, variables):
         self._label = Label(**label)
         self.label = label['text']
         self._variables = variables
@@ -130,11 +109,6 @@ class Label:
         self._alt_label = altLabels
         self.alt_labels = parse(self._alt_label, AltLabel)
 
-        # if altLabels is not None:
-        #     for al in altLabels:
-        #         alt_label = AltLabel(**al)
-        #         self.alt_labels.append(alt_label)
-
     def __str__(self):
         return self.text
 
@@ -154,7 +128,6 @@ class Label:
         if self.alt_labels:
             for alts in self.alt_labels:
                 if alts.mode == AltLabelMode.INTERVIEW:
-                    alt_text = alts.text
                     return alts.text
         return alt_text
 
@@ -194,11 +167,6 @@ class Variable:
 
         self._loopedVariables = loopedVariables
         self.looped_variables = parse(self._loopedVariables, Variable)
-
-        variable_reference.update({self.ident: self})
-
-
-
 
     @property
     def looped_variable_values(self):
@@ -244,10 +212,7 @@ class Variable:
 
     @property
     def values(self):
-        try:
-            return self.variable_values.values
-        except:
-            return []
+        return self.variable_values.values
 
     @property
     def label_interview(self):
@@ -272,10 +237,7 @@ class Variable:
         return _r
 
     def range(self):
-        try:
-            return self.variable_values.range
-        except:
-            return {}
+        return self.variable_values.range
 
     def to_dict(self):
         _dict = {
