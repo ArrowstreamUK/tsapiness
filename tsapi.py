@@ -2,7 +2,6 @@ from enum import Enum
 import requests
 import json
 
-
 SERVER = ''
 
 
@@ -89,14 +88,14 @@ class Survey:
 
 class Section:
     def __init__(self, label, variables):
-        self._label = Label(**label)
-        self.label = label['text']
+        self._label = label
+        self.label = Label(**label)
         self._variables = variables
         self.sections = ""
         self.variables = parse(self._variables, Variable)
 
     def __str__(self):
-        return f'label: {self.label}'
+        return f'{self.label}'
 
     def __repr__(self):
         return f'{self.label}'
@@ -151,14 +150,14 @@ class Variable:
         self.otherSpecifyVariables = parse(self._otherSpecifyVariables,
                                            OtherSpecifyVariable)
 
-        self.ident = ident  # string
-        self.ordinal = ordinal  # int
-        self._type = type  # string
-        self.name = name  # string
-        self._label = label
-        self.label = Label(**label)
-        self.use = use  # string
-        self.maxResponses = maxResponses  # int
+        self.ident: str = ident
+        self.ordinal: int = ordinal
+        self._type: str = type
+        self.name: str = name
+        self._label: dict = label
+        self.label: Label = Label(**label)
+        self.use: str = use
+        self.maxResponses: int = maxResponses
 
         if values is None:
             values = {}
@@ -344,7 +343,6 @@ class Value:
 
 class VariableValues:
     def __init__(self, range=None, values=None):
-
         self._range = range
         self._values = values
         self.values = parse(self._values, Value)
@@ -414,7 +412,6 @@ class LoopedVariable(Variable):
         return self.loop_ref.value_ident
 
     def to_dict(self):
-
         _dict = {
             'var_name': self.name,
             'variable_name': self.name,
@@ -440,14 +437,14 @@ class LoopedVariable(Variable):
 
 
 class Hierarchy:
-    def __init__(self, ident="", parent=None, metadata=None):
+    def __init__(self, ident: str = "", parent=None, metadata=None):
         if metadata is None:
             metadata = {}
         if parent is None:
             parent = {}
-        self.ident = ident
-        self.parent = parent
-        self.metadata = metadata
+        self.ident: str = ident
+        self.parent: ParentDetails = parent
+        self.metadata: MetaData = metadata
 
 
 class ParentDetails:
