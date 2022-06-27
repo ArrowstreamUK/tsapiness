@@ -1,9 +1,15 @@
 from enum import Enum
-import requests
-import json
 
-SERVER = ''
 
+def add(d, label, obj, apply_to_tsapi=False):
+    if apply_to_tsapi:
+        if obj is not None:
+            d[label] = obj.to_tsapi()
+        return d
+    else:
+        if obj is not None:
+            d[label] = obj
+        return d
 
 class VariableType(Enum):
     SINGLE = 'Single'
@@ -65,19 +71,15 @@ class Survey:
     def __init__(self, hierarchies=None, name="", title="", interviewCount=0,
                  languages=None, notAsked="", noAnswer="", variables=None,
                  sections=None):
-        self._hierarchies = hierarchies
-        self.hierarchies = parse(self._hierarchies, Hierarchy)
+        self.hierarchies = parse(hierarchies, Hierarchy)
         self.name = name
         self.title = title
         self.interview_count = interviewCount
         self.not_asked = notAsked
         self.no_answer = noAnswer
-        self._variables = variables
-        self.variables = parse(self._variables, Variable)
-        self._sections = sections
-        self.sections = parse(self._sections, Section)
-        self._languages = languages
-        self.languages = parse(self._languages, Language)
+        self.variables = parse(variables, Variable)
+        self.sections = parse(sections, Section)
+        self.languages = parse(languages, Language)
 
     def __str__(self):
         return f'Name: {self.name}, Title {self.title}'
@@ -85,14 +87,41 @@ class Survey:
     def __repr__(self):
         return f'Survey({self.name})'
 
+    def get_variables_list(self):
+
+        variable_objects = ['variables',
+                            'looped_variable',
+                            'other_specify_variable',
+                            ]
+        objects_with_variables = ['survey', 'sections', 'hierarchies', ]
+        objects_with_variables += variable_objects
+
+        _dict = {}
+        _dict = vars(self)
+
+        return _dict
+
+
+    def to_tsapi(self):
+        _dict = {
+            'hierarchies': [h.to_tsapi() for h in self.hierarchies],
+            'name': self.name,
+            'title': self.title,
+            'interviewCount': self.interview_count,
+            'languages': [lang.to_tsapi() for lang in self.languages],
+            'notAsked': self.not_asked,
+            'noAnswer': self.no_answer,
+            'variables': [v.to_tsapi() for v in self.variables],
+            'sections': [sect.to_tsapi() for sect in self.sections]
+        }
+        return _dict
+
 
 class Section:
     def __init__(self, label, variables):
-        self._label = label
         self.label = Label(**label)
-        self._variables = variables
         self.sections = ""
-        self.variables = parse(self._variables, Variable)
+        self.variables = parse(variables, Variable)
 
     def __str__(self):
         return f'{self.label}'
@@ -100,13 +129,19 @@ class Section:
     def __repr__(self):
         return f'{self.label}'
 
+    def to_tsapi(self):
+        _dict = {
+            'label': self.label.to_tsapi(),
+            'variables': [v.to_tsapi() for v in self.variables]
+        }
+        return _dict
+
 
 class Label:
     def __init__(self, text, altLabels=None):
 
         self.text = text
-        self._alt_label = altLabels
-        self.alt_labels = parse(self._alt_label, AltLabel)
+        self.alt_labels = parse(altLabels, AltLabel)
 
     def __str__(self):
         return self.text
@@ -130,6 +165,14 @@ class Label:
                     return alts.text
         return alt_text
 
+    def to_tsapi(self):
+        _dict = {}
+        _dict = add(_dict, 'text', self.text)
+        if len(self.alt_labels) > 0:
+            dict['altLabels'] = [al.to_tsapi() for al in self.alt_labels]
+
+        return _dict
+
 
 class Variable:
     def __init__(self,
@@ -144,28 +187,40 @@ class Variable:
                  loopedVariables=None,
                  otherSpecifyVariables=None):
 
-        # if otherSpecifyVariables is None:
-        #     otherSpecifyVariables = []
-        self._otherSpecifyVariables = otherSpecifyVariables
-        self.otherSpecifyVariables = parse(self._otherSpecifyVariables,
-                                           OtherSpecifyVariable)
-
         self.ident: str = ident
         self.ordinal: int = ordinal
         self._type: str = type
         self.name: str = name
-        self._label: dict = label
         self.label: Label = Label(**label)
         self.use: str = use
         self.maxResponses: int = maxResponses
-
+        self.otherSpecifyVariables = parse(otherSpecifyVariables,
+                                           OtherSpecifyVariable)
         if values is None:
             values = {}
-        self._variable_values = values
         self.variable_values = VariableValues(**values)
 
-        self._loopedVariables = loopedVariables
-        self.looped_variables = parse(self._loopedVariables, Variable)
+        self.looped_variables = parse(loopedVariables, LoopedVariable)
+
+    def to_tsapi(self):
+
+        _dict = {}
+        _dict = add(_dict, 'ordinal', self.ordinal)
+        _dict = add(_dict, 'label', self.label, True)
+        _dict = add(_dict, 'name', self.name)
+        _dict = add(_dict, 'ident', self.ident)
+        _dict = add(_dict, 'type', self.type.value)
+        _dict = add(_dict, 'values', self.variable_values, True)
+        _dict = add(_dict, 'use', self.use)
+        _dict = add(_dict, 'maxResponses', self.maxResponses)
+        if len(self.looped_variables) > 0:
+            _dict['loopedVariables'] = [lv.to_tsapi()
+                                        for lv in self.looped_variables],
+        if len(self.otherSpecifyVariables) > 0:
+            _dict['otherSpecifyVariables'] = [o.to_tsapi() for o in
+                                              self.otherSpecifyVariables],
+
+        return _dict
 
     @property
     def looped_variable_values(self):
@@ -175,19 +230,7 @@ class Variable:
 
         for value in self.values:
             for l_v in self.looped_variables:
-                loop_ref = LoopRef(self.ident, value.ident)
-                l_v = LoopedVariable(ordinal=l_v.ordinal,
-                                     label=l_v._label,
-                                     name=l_v.name,
-                                     ident=l_v.ident,
-                                     type=l_v._type,
-                                     values=l_v._variable_values,
-                                     use=l_v.use,
-                                     maxResponses=l_v.maxResponses,
-                                     loopedVariables=l_v._loopedVariables,
-                                     otherSpecifyVariables=l_v._otherSpecifyVariables,
-                                     loop_ref=loop_ref
-                                     )
+
                 looped_variable_value_list.append(l_v)
         return looped_variable_value_list
 
@@ -224,14 +267,14 @@ class Variable:
     @property
     def range_from(self):
         _r = ""
-        if self.variable_values._range:
+        if self.variable_values.range:
             _r = self.variable_values.range.range_from
         return _r
 
     @property
     def range_to(self):
         _r = ""
-        if self.variable_values._range:
+        if self.variable_values.range:
             _r = self.variable_values.range.range_to
         return _r
 
@@ -256,18 +299,26 @@ class Variable:
 
 class Language:
     def __init__(self, ident="", name="", subLanguages=None):
-        if subLanguages is None:
-            subLanguages = []
+        # if subLanguages is None:
+        #     subLanguages = []
         self.ident = ident
         self.name = name
-        self._sub_language = subLanguages
-        self.subLanguages = parse(self._sub_language, Language)
+        self.sub_languages = parse(subLanguages, Language)
 
     def __str__(self):
         return f'{self.name}'
 
     def __repr__(self):
         return f'language:{self.name}'
+
+    def to_tsapi(self):
+        _dict = {
+            'ident': self.ident,
+            'name': self.name
+        }
+        if len(self.sub_languages) > 0:
+            _dict['subLanguage'] = self.sub_languages.to_tsapi()
+        return _dict
 
 
 class AltLabel:
@@ -282,6 +333,13 @@ class AltLabel:
     def __repr__(self):
         return f'{self.mode} {self.text} {self.langIdent}'
 
+    def to_tsapi(self):
+        _dict = {
+            'mode': self.mode.value,
+            'text': self.text,
+            'langIdent': self.langIdent
+        }
+        return _dict
 
 class ValueRange:
     def __init__(self, **kwargs):
@@ -291,6 +349,12 @@ class ValueRange:
     def __repr__(self):
         return f'range: {self.range_from} - {self.range_to}'
 
+    def to_tsapi(self):
+        _dict = {
+            'from': self.range_from,
+            'to': self.range_to
+        }
+        return _dict
 
 class ValueRef:
     def __init__(self, variableIdent="", valueIdent=""):
@@ -307,6 +371,13 @@ class ValueRef:
             f'value_ident:{self.value_ident} '
         return a
 
+    def to_tsapi(self):
+        _dict = {
+            'variable_ident': self.variable_ident,
+            'value_ident': self.value_ident
+        }
+        return _dict
+
 
 class Value:
     def __init__(self, ident="", code="", label=None, score=0, ref=None):
@@ -317,17 +388,28 @@ class Value:
 
         self.ident = ident
         self.code = code
-        self._label = Label(**label)
+        self.label = Label(**label)
         self.score = score
-        self._ref = ref
-        self.ref = ValueRef(**ref)
 
-    @property
-    def label(self):
-        return f'{self.ident} - {self._label.text}'
+        self.ref = None # ValueRef(**ref)
+
+
+    def to_tsapi(self):
+        _dict = {}
+        _dict = add(_dict, 'ident', self.ident)
+        _dict = add(_dict, 'code', self.code)
+        _dict = add(_dict, 'label', self.label, True)
+        _dict = add(_dict, 'score', self.score)
+        _dict = add(_dict, 'ref', self.ref)
+
+        return _dict
+
+    # @property
+    # def label(self):
+    #     return f'{self.ident} - {self._label.text}'
 
     def __str__(self):
-        return f'{self.ident} - {self._label.text}'
+        return f'{self.ident} - {self.label.text}'
 
     def __repr__(self):
         return self.label
@@ -336,19 +418,27 @@ class Value:
         _dict = {
             'value_code': self.code,
             'value_ident': self.ident,
-            'value_label': self.label,
+            'value_label': self.label.text,
             'value_score': self.score}
         return _dict
 
 
 class VariableValues:
     def __init__(self, range=None, values=None):
-        self._range = range
-        self._values = values
-        self.values = parse(self._values, Value)
+        self.range = range
 
-        if self._range is not None:
-            self.range = ValueRange(**self._range)
+        self.values = parse(values, Value)
+
+        if self.range is not None:
+            self.range = ValueRange(**self.range)
+
+    def to_tsapi(self):
+        _dict = {}
+        if self.values is not None:
+            _dict['values'] = [val.to_tsapi() for val in self.values]
+        if self.range is not None:
+            _dict['range'] = self.range.to_tsapi()
+        return _dict
 
 
 class OtherSpecifyVariable(Variable):
@@ -376,8 +466,28 @@ class OtherSpecifyVariable(Variable):
                          otherSpecifyVariables=otherSpecifyVariables)
         self.parentValueIdent = parentValueIdent
 
+    def to_tsapi(self):
+        _dict = {}
+        _dict = add(_dict, 'ordinal', self.ordinal)
+        _dict = add(_dict, 'label', self.label, True)
+        _dict = add(_dict, 'name', self.name)
+        _dict = add(_dict, 'ident', self.ident)
+        _dict = add(_dict, 'type', self.type.value)
+        _dict = add(_dict, 'values', self.variable_values, True)
+        _dict = add(_dict, 'use', self.use)
+        _dict = add(_dict, 'maxResponses', self.maxResponses)
+        _dict['loopedVariables'] = [lv.to_tsapi() for lv in
+                                    self.looped_variables]
+        _dict['otherSpecifyVariables'] = [o.to_tsapi() for o in
+                                          self.otherSpecifyVariables]
+
+        _dict = add(_dict, 'parentValueIdent', self.parentValueIdent)
+
+        return _dict
+
 
 class LoopedVariable(Variable):
+
     def __init__(self,
                  ordinal=0,
                  label=None,
@@ -403,13 +513,37 @@ class LoopedVariable(Variable):
 
         self.loop_ref = loop_ref
 
+    def to_tsapi(self):
+        _dict = {}
+        _dict = add(_dict, 'ordinal', self.ordinal)
+        _dict = add(_dict, 'label', self.label, True)
+        _dict = add(_dict, 'name', self.name)
+        _dict = add(_dict, 'ident', self.ident)
+        _dict = add(_dict, 'type', self.type.value)
+        _dict = add(_dict, 'values', self.variable_values, True)
+        _dict = add(_dict, 'use', self.use)
+        _dict = add(_dict, 'maxResponses', self.maxResponses)
+        _dict['loopedVariables'] = [lv.to_tsapi() for lv in
+                                    self.looped_variables]
+        _dict['otherSpecifyVariables'] = [o.to_tsapi() for o in
+                                          self.otherSpecifyVariables]
+        _dict = add(_dict, 'loopRef', self.loop_ref, True)
+
+        return _dict
+
     @property
     def parent_variable_ident(self):
-        return self.loop_ref.variable_ident
+        if self.loop_ref is not None:
+            self.loop_ref.variable_ident
+        else:
+            ""
 
     @property
     def parent_value_ident(self):
-        return self.loop_ref.value_ident
+        if self.loop_ref is not None:
+            self.loop_ref.value_ident
+        else:
+            ""
 
     def to_dict(self):
         _dict = {
@@ -433,7 +567,7 @@ class LoopedVariable(Variable):
         return f'{self.name} - {self.parent_value_ident}'
 
     def __repr__(self):
-        return f'{self.name} - {self.parent_value_ident}'
+        return f'{self.name}'
 
 
 class Hierarchy:
@@ -446,6 +580,13 @@ class Hierarchy:
         self.parent: ParentDetails = parent
         self.metadata: MetaData = metadata
 
+    def to_tsapi(self):
+        _dict = {
+            'ident': self.ident,
+            'metadata': self.metadata.to_tsapi(),
+            'parent': self.parent
+        }
+
 
 class ParentDetails:
     def __init__(self, level, linkVar, ordered):
@@ -457,33 +598,27 @@ class ParentDetails:
 class MetaData:
     def __init__(self, name="", title="", interviewCount=0, languages=None,
                  notAsked="", noAnswer="", variables=None, sections=None):
-        self._languages = languages
         self.name = name
         self.title = title
         self.interviewCount = interviewCount
         self.not_asked = notAsked
         self.no_answer = noAnswer
-        self._variables = variables
-        self._sections = sections
-        self.sections = []
-        self.variables = []
-        self.languages = []
+        self.sections = parse(sections, Section)
+        self.variables = parse(variables, Variable)
+        self.languages = parse(languages, Language)
 
-        if self._languages is not None:
-            for _l in self._languages:
-                language = Language(**_l)
-                self.languages.append(language)
-
-        if self._sections is not None:
-            for _s in self._sections:
-                section = Section(**_s)
-                self.sections.append(section)
-
-        if self._variables is not None:
-            for _v in self._variables:
-                variable = Section(**_v)
-                self.variables.append(variable)
-
+    def to_tsapi(self):
+        _dict = {
+            'name': self.name,
+            'title': self.name,
+            'interviewCount': self.interview_count,
+            'notAsked': self.not_asked,
+            'noAnswer': self.no_answer,
+            'variables': [var.to_tsapi() for var in self.variables],
+            'sections': [sect.to_tsapi() for sect in self.sections],
+            'languages': [l.to_tsapi() for l in self.languages],
+        }
+        return _dict
 
 class InterviewsQuery:
     def __init__(self,
@@ -508,12 +643,18 @@ class LoopRef:
         self.variable_ident = variableIdent
         self.value_ident = valueIdent
 
+    def to_tsapi(self):
+        _dict = {'variableIdent': self.variable_ident,
+                 'valueIdent': self.value_ident}
+        return _dict
+
 
 class DataItem:
     def __init__(self, ident="", values=None, loopRef=None):
         self.ident = ident
         self._values = values
         self._loop_refs = loopRef
+
 
 
 class Level:
@@ -546,38 +687,4 @@ class Interview:
         self._hierarchical_interviews = hierarchicalInterviews
 
 
-class SurveyEncoder(json.JSONEncoder):
-    def default(self, o):
-        return o.__dict__
 
-
-def get_surveys():
-    r = requests.get(f'{SERVER}/Surveys')
-    a = json.loads(r.text)
-    print("Status:", r.status_code)
-    return a
-
-
-def get_survey_detail(s_id):
-    print(f'Survey:, {s_id}')
-    url = f'{SERVER}/Surveys/{s_id}/Metadata'
-    print(url)
-    r = requests.get(url)
-    a = json.loads(r.text)
-
-    return a
-
-
-def get_survey_detail_json(s_id):
-    print(f'Survey:, {s_id}')
-    url = f'{SERVER}/Surveys/{s_id}/Metadata'
-    print(url)
-    r = requests.get(url)
-
-    return r
-
-
-def get_survey(r):
-    json_r = json.loads(r.text)
-    survey_obj = Survey(**json_r)
-    return survey_obj
