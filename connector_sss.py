@@ -2,7 +2,6 @@ import xml.etree.ElementTree as ET
 import tsapi as ts
 
 
-
 def get_node_attrib(item, attribute, if_none):
     _a = if_none
     if attribute in item.attrib:
