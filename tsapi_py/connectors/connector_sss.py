@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-import tsapi as ts
+from tsapi_py import tsapi as ts
 
 
 def get_node_attrib(item, attribute, if_none):

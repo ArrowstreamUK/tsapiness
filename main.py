@@ -1,11 +1,8 @@
-import tsapi as ts
+import tsapi_py as ts
 import pandas as pd
 import json
-import connector_sss
-import connector_tsapi
-
 # Access the TSAPI demo server
-
+from tsapi_py.connectors import connector_tsapi, connector_sss
 
 SERVER = 'https://tsapi-demo.azurewebsites.net'
 
@@ -19,7 +16,7 @@ survey_from_api = api.get_survey(s_id=survey_id)
 data_rows = []
 for section in survey_from_api.sections:
     for v in section.variables:
-        data_rows = ts.flatten_variable(variable=v,
+        data_rows = ts.tsapi.flatten_variable(variable=v,
                                         variable_list=data_rows)
 df = pd.DataFrame(data_rows)
 df.to_csv('meta.csv', index=False)

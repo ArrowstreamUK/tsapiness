@@ -1,6 +1,6 @@
 import json
 import requests
-import tsapi
+from tsapi_py import tsapi
 
 
 class SurveyEncoder(json.JSONEncoder):
