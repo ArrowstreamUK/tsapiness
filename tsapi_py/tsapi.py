@@ -67,7 +67,7 @@ def flatten_variable(variable, variable_list):
     return variable_list
 
 
-class Survey:
+class SurveyMetadata:
     def __init__(self, hierarchies=None, name="", title="", interviewCount=0,
                  languages=None, notAsked="", noAnswer="", variables=None,
                  sections=None):
@@ -100,7 +100,6 @@ class Survey:
         _dict = vars(self)
 
         return _dict
-
 
     def to_tsapi(self):
         _dict = {
@@ -341,6 +340,7 @@ class AltLabel:
         }
         return _dict
 
+
 class ValueRange:
     def __init__(self, **kwargs):
         self.range_from = kwargs['from']
@@ -355,6 +355,7 @@ class ValueRange:
             'to': self.range_to
         }
         return _dict
+
 
 class ValueRef:
     def __init__(self, variableIdent="", valueIdent=""):
@@ -620,6 +621,7 @@ class MetaData:
         }
         return _dict
 
+
 class InterviewsQuery:
     def __init__(self,
                  surveyId="",
@@ -650,31 +652,29 @@ class LoopRef:
 
 
 class DataItem:
-    def __init__(self, ident="", values=None, loopRef=None):
+    def __init__(self, ident="", values=None, loopRefs=None):
         self.ident = ident
-        self._values = values
-        self._loop_refs = loopRef
-
+        self.values = [v for v in values]
+        if loopRefs is not None:
+            self.loop_refs = [LoopRef(**lr) for lr in loopRefs]
 
 
 class Level:
     def __init__(self, ident=""):
-        self.ident = ""
+        self.ident = ident
 
 
 class HierarchicalInterview:
     def __init__(self, level=None, ident="", date="", complete=True,
                  dataItems=None, hierarchicalInterviews=None):
-        if hierarchicalInterviews is None:
-            hierarchicalInterviews = []
-        if dataItems is None:
-            dataItems = []
-        self.level = level
+
+        self.level = Level(**level)
         self.ident = ident
         self.date = date
         self.complete = complete
-        self._data_items = dataItems
-        self._hierarchical_interviews = hierarchicalInterviews
+        self.data_items = parse(dataItems, DataItem)
+        self.hierarchical_interviews = parse(hierarchicalInterviews,
+                                             HierarchicalInterview)
 
 
 class Interview:
@@ -683,8 +683,9 @@ class Interview:
         self.ident = ident
         self.date = date
         self.complete = complete
-        self._data_items = dataItems
-        self._hierarchical_interviews = hierarchicalInterviews
+        self.data_items = parse(dataItems, DataItem)
+        self.hierarchical_interviews = parse(hierarchicalInterviews,
+                                             HierarchicalInterview)
 
 
 
