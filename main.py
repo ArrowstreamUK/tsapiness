@@ -8,17 +8,20 @@ import requests
 
 
 SERVER = 'https://tsapi-demo.azurewebsites.net'
-api = connector_tsapi.Survey(server=SERVER)
+conn = connector_tsapi.Connection(server=SERVER)
 
-survey_id = api.surveys[0]['id']
-survey_from_api = api.get_survey(s_id=survey_id)
-interviews_from_api = api.get_interviews(s_id=survey_id)
+surveys = connector_tsapi.Surveys(connection=conn)
+
+survey_id = surveys[0]['id']
+survey_from_api = connector_tsapi.Survey(survey_id=survey_id, connection=conn)
+
 
 # now apply method for flattening the survey into a tabular format.
 
 # example of exporting to csv
 data_rows = []
-for section in survey_from_api.sections:
+
+for section in survey_from_api.metadata.sections:
     for v in section.variables:
         data_rows = ts.tsapi.flatten_variable(variable=v,
                                               variable_list=data_rows)
@@ -29,9 +32,11 @@ df.to_csv('meta.csv', index=False)
 
 sss_file = r'C:\training data.sss'
 asc_file = r'C:\Askia Training Data.asc'
-# sss = connector_sss.SurveyMetaData(f)
 
-ss = connector_sss.Survey(sss_file=sss_file, asc_file=asc_file)
+
+conn = connector_sss.Connection(sss_file=sss_file, asc_file=asc_file)
+survey_from_sss = connector_sss.Survey(connection=conn)
+
 
 # sss.survey = sss.get_survey()
 

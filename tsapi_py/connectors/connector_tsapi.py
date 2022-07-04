@@ -3,29 +3,45 @@ import requests
 from tsapi_py import tsapi
 
 
-class connection:
+class Connection:
     def __init__(self, server):
         self.server = server
 
 class Surveys:
     def __init__(self, connection):
+        self.connection = connection
         self.surveys = self.get_surveys()
+
+    def __getitem__(self, item):
+        return self.surveys[item]
+
+    def __iter__(self):
+        return list(self.surveys)
+
+    def __next__(self):
+        try:
+            result = self.surveys[self.index]
+        except IndexError:
+            raise StopIteration
+        self.index += 1
+        return result
+
 
 
     def get_surveys(self):
-        r = requests.get(f'{self.server}/Surveys')
+        r = requests.get(f'{self.connection.server}/Surveys')
         a = json.loads(r.text)
         return a
 
 
 class Survey:
     def __init__(self, survey_id, connection):
-
-        self.metadata = self.get_interviews(survey_id)
-        self.interviews = survey_id
+        self.connection = connection
+        self.metadata = self.get_survey(survey_id)
+        self.interviews = self.get_interviews(survey_id)
 
     def get_survey(self, s_id):
-        url = f'{self.server}/Surveys/{s_id}/Metadata'
+        url = f'{self.connection.server}/Surveys/{s_id}/Metadata'
         r = requests.get(url)
         json_r = json.loads(r.text)
         survey_obj = tsapi.SurveyMetadata(**json_r)
@@ -48,12 +64,12 @@ class Survey:
         }
 
         r = requests.post(
-            f'{self.server}/Surveys/Interviews',
+            f'{self.connection.server}/Surveys/Interviews',
             headers=headers, json=json_data)
         json_r = json.loads(r.text)
         interviews = []
         for interview in json_r:
             interview_record = tsapi.Interview(**interview)
-            interviews.append(interview)
+            interviews.append(interview_record)
 
-        return interview
+        return interviews

@@ -2,16 +2,21 @@ import xml.etree.ElementTree as et
 from tsapi_py import tsapi as ts
 
 
-class Survey:
+class Connection:
     def __init__(self, asc_file, sss_file):
         self.asc_file = asc_file
         self.sss_file = sss_file
-        self.meta_data = SurveyMetaData(self.sss_file)
-        self.interview_data = self.get_interviews()
 
-    def get_interviews(self):
+
+class Survey:
+    def __init__(self, connection: Connection):
+        self.connection = connection
+        self.metadata = SurveyMetaData(self.connection.sss_file)
+        self.interviews = self.get_interviews(self.connection.asc_file)
+
+    def get_interviews(self, file):
         interviews = []
-        with open(self.asc_file) as f:
+        with open(file) as f:
             lines = f.readlines()
             count_row_id = 0
 
@@ -26,7 +31,7 @@ class Survey:
                 iv = ts.Interview(**i)
 
                 # populate dataitems
-                for loc in self.meta_data.variable_positions:
+                for loc in self.metadata.variable_positions:
                     start = 0
                     finish = 0
                     subfields = 0
@@ -56,12 +61,19 @@ class Survey:
         return interviews
 
 
+def _get_node_attrib(item, attribute, if_none):
+    _a = if_none
+    if attribute in item.attrib:
+        _a = item.attrib[attribute]
+        return _a
+
+
 class SurveyMetaData:
     def __init__(self, file):
         self.file = file
         self.tree = et.parse(self.file)
         self.survey = self.get_survey()
-        self.variable_positions = self._get_varible_position()
+        self.variable_positions = self._get_variable_position()
 
     @property
     def xml_tree(self):
@@ -72,16 +84,10 @@ class SurveyMetaData:
         _root = self.xml_tree.getroot()
         return _root
 
-    def _get_node_attrib(self, item, attribute, if_none):
-        _a = if_none
-        if attribute in item.attrib:
-            _a = item.attrib[attribute]
-            return _a
-
     def get_value(self, node):
-        v_ident = self._get_node_attrib(node, 'ident', "")
-        v_code = self._get_node_attrib(node, 'code', "")
-        v_score = self._get_node_attrib(node, 'score', 0)
+        v_ident = _get_node_attrib(node, 'ident', "")
+        v_code = _get_node_attrib(node, 'code', "")
+        v_score = _get_node_attrib(node, 'score', 0)
         v_ref = None
 
         v_label = node.text
@@ -107,8 +113,8 @@ class SurveyMetaData:
                 value_list.append(_val)
 
             for rng in node.findall('range'):
-                range_to = self._get_node_attrib(rng, 'to', 0)
-                range_from = self._get_node_attrib(rng, 'from', 0)
+                range_to = _get_node_attrib(rng, 'to', 0)
+                range_from = _get_node_attrib(rng, 'from', 0)
                 range_dict = {'from': range_from, 'to': range_to}
                 _range = ts.ValueRange(**range_dict)
             _variable_value.values = value_list
@@ -131,11 +137,11 @@ class SurveyMetaData:
 
         return _s
 
-    def _get_varible_position(self):
+    def _get_variable_position(self):
         variable_nodes = self._root().iter('variable')
         v_list = []
         for var in variable_nodes:
-            v_ident = self._get_node_attrib(var, 'ident', "")
+            v_ident = _get_node_attrib(var, 'ident', "")
             v_pos = {}
             v_spread = {}
             v_size = 0
@@ -156,9 +162,9 @@ class SurveyMetaData:
         variable_nodes = self._root().iter('variable')
         v_list = []
         for var in variable_nodes:
-            v_ident = get_node_attrib(var, 'ident', "")
-            v_type = get_node_attrib(var, 'type', "").title()
-            v_use = get_node_attrib(var, 'use', "")
+            v_ident = _get_node_attrib(var, 'ident', "")
+            v_type = _get_node_attrib(var, 'type', "").title()
+            v_use = _get_node_attrib(var, 'use', "")
             v_label = ""
             v_name = ""
             v_values = None
@@ -166,7 +172,7 @@ class SurveyMetaData:
             for attr in var:
                 v_label = attr.text if attr.tag == 'label' else v_label
                 v_name = attr.text if attr.tag == 'name' else v_name
-                v_values = get_variable_values(
+                v_values = self.get_variable_values(
                     attr) if attr.tag == 'values' else v_values
 
             v_label = {'text': v_label}
