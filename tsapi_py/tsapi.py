@@ -234,10 +234,10 @@ class Variable:
         return looped_variable_value_list
 
     def __str__(self):
-        return f'{self.name}'
+        return f'{self.ident}'
 
     def __repr__(self):
-        return f'{self.name}'
+        return f'{self.ident}'
 
     @property
     def type(self):
@@ -686,6 +686,3 @@ class Interview:
         self.data_items = parse(dataItems, DataItem)
         self.hierarchical_interviews = parse(hierarchicalInterviews,
                                              HierarchicalInterview)
-
-
-

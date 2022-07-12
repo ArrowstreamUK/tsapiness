@@ -1,5 +1,5 @@
 import tsapi_py as ts
-from tsapi_py.connectors import connector_tsapi, connector_sss
+from tsapi_py.connectors import connector_tsapi, connector_sss, connector_sav
 import pandas as pd
 import json
 import requests
@@ -30,14 +30,20 @@ df.to_csv('meta.csv', index=False)
 
 # create tsapi from triple s file:
 
-sss_file = r'C:\training data.sss'
-asc_file = r'C:\Askia Training Data.asc'
+sss_file = r'C:\example.sss'
+asc_file = r'C:\example.asc'
 
 conn = connector_sss.Connection(sss_file=sss_file, asc_file=asc_file)
 survey_from_sss = connector_sss.Survey(connection=conn)
 
 with open('data.json', 'w', encoding='utf8') as f:
-    json.dump(survey_from_sss.survey.to_tsapi(),
+    json.dump(survey_from_sss.metadata.survey.to_tsapi(),
               f,
               indent=4,
               ensure_ascii=False)
+
+sav_file = r"C:\project\matt\Pew Global Attitudes Spring 2014.sav"
+conn = connector_sav.Connection(sav_file=sav_file)
+survey_from_sav = connector_sav.Survey(connection=conn)
+print("done")
+
