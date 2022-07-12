@@ -1,8 +1,6 @@
-import tsapi_py as ts
+
 from tsapi_py.connectors import connector_tsapi, connector_sss, connector_sav
-import pandas as pd
 import json
-import requests
 
 # Create tsapi object from TSAPI demo server
 
@@ -35,6 +33,3 @@ with open('data.json', 'w', encoding='utf8') as f:
 sav_file = r"C:\Pew Global Attitudes Spring 2014.sav"
 conn = connector_sav.Connection(sav_file=sav_file)
 survey_from_sav = connector_sav.Survey(connection=conn)
-
-
-
