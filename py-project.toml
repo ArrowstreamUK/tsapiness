@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tsapi-py"
+version = "0.0.1"
+authors = [
+  { name="Andrew Le Breuilly", email="andrew@arrowstream.co.uk" },
+]
+description = "An open source python package to connect survey data to the survey definition defined by tsapi"
+readme = "README.md"
+license = { file="LICENSE" }
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ArrowstreamUK/TSAPI-py"
+"Bug Tracker" = "https://github.com/ArrowstreamUK/TSAPI-py/issues"
