@@ -1,3 +1,3 @@
-from . import tsapi
-from src.tsapi_py import *
+from . import tsapi, connector_tsapi, connector_sss, connector_sav
+
 

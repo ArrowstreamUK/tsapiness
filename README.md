@@ -11,30 +11,41 @@ These are early days for the project but the aim is to create a PYPI package tha
 A simple implementation is below...
 
 ```
+
+
 import tsapi as ts
-import pandas as pd
+import json
 
-# Access the TSAPI demp server
-ts.SERVER = 'https://tsapi-demo.azurewebsites.net'
+# Create tsapi object from TSAPI demo server
 
-# get list of all available surveys on server
-surveys = ts.get_surveys()
+SERVER = 'https://tsapi-demo.azurewebsites.net'
+conn = ts.connector_tsapi.Connection(server=SERVER)
+surveys = ts.connector_tsapi.Surveys(connection=conn)
+survey_id = surveys[0]['id']
+survey_from_api = ts.connector_tsapi.Survey(survey_id=survey_id, connection=conn)
 
-# select first survey on server and source the json
-survey = surveys[0]
-r = ts.get_survey_detail_json(survey['id'])
+# create tsapi from triple s file:
 
-# create the survey object
-s = ts.get_survey(r)
+sss_file = '../data/example.sss'
+asc_file = '../data/example.asc'
 
-# now apply method for flattening the survey into a tabular format. 
+conn = ts.connector_sss.Connection(sss_file=sss_file, asc_file=asc_file)
+survey_from_sss = ts.connector_sss.Survey(connection=conn)
 
-data_rows = []
-for section in s.sections:
-    for v in section.variables:
-        data_rows = ts.flatten_variable(variable=v,
-                                        variable_list=data_rows)
+# save back to json
+with open('../data/data.json', 'w', encoding='utf8') as f:
+    json.dump(survey_from_sss.metadata.survey.to_tsapi(),
+              f,
+              indent=4,
+              ensure_ascii=False)
 
-df = pd.DataFrame(data_rows)
+# create tsapi from sav file
+
+# source:
+# https://www.pewresearch.org/global/dataset/2014-spring-global-attitudes/
+
+sav_file = '../data/Pew Global Attitudes Spring 2014.sav'
+conn = ts.connector_sav.Connection(sav_file=sav_file)
+survey_from_sav = ts.connector_sav.Survey(connection=conn)
 
 ```

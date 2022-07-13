@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 def add(d, label, obj, apply_to_tsapi=False):
     if apply_to_tsapi:
         if obj is not None:
@@ -10,6 +9,7 @@ def add(d, label, obj, apply_to_tsapi=False):
         if obj is not None:
             d[label] = obj
         return d
+
 
 class VariableType(Enum):
     SINGLE = 'Single'
