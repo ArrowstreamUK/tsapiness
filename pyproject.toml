@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tsapi_py"
+name = "tsapiness"
 version = "0.0.1"
 authors = [
   { name="Andrew Le Breuilly", email="andrew@arrowstream.co.uk" },

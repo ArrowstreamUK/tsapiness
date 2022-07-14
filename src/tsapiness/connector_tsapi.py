@@ -1,6 +1,6 @@
 import json
 import requests
-from src.tsapi_py import tsapi
+from src.tsapiness import tsapi
 
 
 class Connection:
