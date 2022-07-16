@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 def add(d, label, obj, apply_to_tsapi=False):
     if apply_to_tsapi:
         if obj is not None:
@@ -26,7 +27,13 @@ class AltLabelMode(Enum):
     ANALYSIS = 2
 
 
-def parse(list_to_parse, obj):
+def parse(list_to_parse: list, obj: object) -> list:
+    """
+
+    :param list_to_parse:
+    :param obj:
+    :return:
+    """
     list_to_return = []
     if list_to_parse is not None:
         for list_item in list_to_parse:

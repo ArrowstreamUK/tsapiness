@@ -1,6 +1,6 @@
 import pyreadstat
 
-from src.tsapiness import tsapi as ts
+import tsapiness.tsapi as ts
 
 
 class Connection:

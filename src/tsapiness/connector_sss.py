@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as et
-from src.tsapiness import tsapi as ts
+import tsapiness.tsapi as ts
 
 
 class Connection:

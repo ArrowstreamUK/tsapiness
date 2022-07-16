@@ -1,19 +1,27 @@
-# TSAPI-py
+# tsapiness
 
-The TSAPI-py aims to make the TSAPI easy to access via Python. 
+tsapiness (pronounced "zappiness") aims to make the TSAPI easy to access via Python. 
 
-Currently the project provides a python representation of the TSAPI so that the data can be manipulated accordingly. 
+Currently, the project provides a python representation of the TSAPI so that the data can be manipulated accordingly. 
 More details on TSAPI can be found here. 
 https://www.tsapi.net/
 
-These are early days for the project but the aim is to create a PYPI package that other applications can rely on. 
+These are early days for the project, in this early version you can:
+* convert an SPSS sav file to tsapi format
+* convert a triple-s file to tsapi format
+* read tsapi from a webserver
+
+Future development intends to:
+* convert other survey platform APIs to the tsapi format
+* provide tools for converting flat tsapi structures that occur when importing from sav or triple-s into the more native hierarchical tsapi structure
+* provide full documentation on how to use tsapiness effectively. 
 
 A simple implementation is below...
 
 ```
 
 
-import tsapi as ts
+import tsapiness as ts
 import json
 
 # Create tsapi object from TSAPI demo server

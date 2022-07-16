@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/TSAPI-py.iml" filepath="$PROJECT_DIR$/.idea/TSAPI-py.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/tsapiness.iml" filepath="$PROJECT_DIR$/.idea/tsapiness.iml" />
     </modules>
   </component>
 </project>

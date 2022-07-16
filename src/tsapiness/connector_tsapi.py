@@ -1,11 +1,12 @@
 import json
 import requests
-from src.tsapiness import tsapi
+import tsapiness.tsapi as ts
 
 
 class Connection:
     def __init__(self, server):
         self.server = server
+
 
 class Surveys:
     def __init__(self, connection):
@@ -26,8 +27,6 @@ class Surveys:
         self.index += 1
         return result
 
-
-
     def get_surveys(self):
         r = requests.get(f'{self.connection.server}/Surveys')
         a = json.loads(r.text)
@@ -44,7 +43,7 @@ class Survey:
         url = f'{self.connection.server}/Surveys/{s_id}/Metadata'
         r = requests.get(url)
         json_r = json.loads(r.text)
-        survey_obj = tsapi.SurveyMetadata(**json_r)
+        survey_obj = ts.SurveyMetadata(**json_r)
 
         return survey_obj
 
@@ -69,7 +68,7 @@ class Survey:
         json_r = json.loads(r.text)
         interviews = []
         for interview in json_r:
-            interview_record = tsapi.Interview(**interview)
+            interview_record = ts.Interview(**interview)
             interviews.append(interview_record)
 
         return interviews

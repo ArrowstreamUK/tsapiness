@@ -1,3 +1,7 @@
-from . import tsapi, connector_tsapi, connector_sss, connector_sav
+import tsapiness.tsapi
+import tsapiness.connector_tsapi
+import tsapiness.connector_sss
+import tsapiness.connector_sav
+
 
 
