@@ -28,12 +28,7 @@ class AltLabelMode(Enum):
 
 
 def parse(list_to_parse: list, obj: object) -> list:
-    """
 
-    :param list_to_parse:
-    :param obj:
-    :return:
-    """
     list_to_return = []
     if list_to_parse is not None:
         for list_item in list_to_parse:

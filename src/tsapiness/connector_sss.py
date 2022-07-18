@@ -3,18 +3,19 @@ import tsapiness.tsapi as ts
 
 
 class Connection:
-    def __init__(self, asc_file, sss_file):
+    def __init__(self, asc_file: str, sss_file: str):
         self.asc_file = asc_file
         self.sss_file = sss_file
 
 
 class Survey:
+
     def __init__(self, connection: Connection):
         self.connection = connection
         self.metadata = SurveyMetaData(self.connection.sss_file)
         self.interviews = self.get_interviews(self.connection.asc_file)
 
-    def get_interviews(self, file):
+    def get_interviews(self, file: str) -> list:
         interviews = []
         with open(file) as f:
             lines = f.readlines()
@@ -69,14 +70,18 @@ def _get_node_attrib(item, attribute, if_none):
 
 
 class SurveyMetaData:
-    def __init__(self, file):
+    def __init__(self, file: str):
         self.file = file
         self.tree = et.parse(self.file)
         self.survey = self.get_survey()
         self.variable_positions = self._get_variable_position()
 
     @property
-    def xml_tree(self):
+    def xml_tree(self) -> et.ElementTree:
+        """
+        converts the xml schema into an xml ElementTree object
+        :return: ElementTree
+        """
         tree = et.parse(self.file)
         return tree
 
@@ -100,7 +105,7 @@ class SurveyMetaData:
 
         return _v
 
-    def get_variable_values(self, node):
+    def get_variable_values(self, node) -> ts.VariableValues:
         # expects the node called values
         # values can have two types of items 1. range, 2. value
         # there will be only one range but an unlimited number of values.
@@ -123,7 +128,7 @@ class SurveyMetaData:
         else:
             pass
 
-    def get_survey(self):
+    def get_survey(self) -> ts.SurveyMetadata:
         survey_node = self._root().findall('survey')[0]
         s_name = ''
         s_title = ''
@@ -137,7 +142,7 @@ class SurveyMetaData:
 
         return _s
 
-    def _get_variable_position(self):
+    def _get_variable_position(self) -> list:
         variable_nodes = self._root().iter('variable')
         v_list = []
         for var in variable_nodes:
@@ -158,7 +163,7 @@ class SurveyMetaData:
             v_list.append(v_data_location)
         return v_list
 
-    def _get_variable(self):
+    def _get_variable(self) -> list:
         variable_nodes = self._root().iter('variable')
         v_list = []
         for var in variable_nodes:
