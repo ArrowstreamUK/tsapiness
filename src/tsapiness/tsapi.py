@@ -13,18 +13,18 @@ def add(d, label, obj, apply_to_tsapi=False):
 
 
 class VariableType(Enum):
-    SINGLE = 'Single'
-    MULTI = 'Multiple'
-    QUANTITY = 'Quantity'
-    CHARACTER = 'Character'
-    LOGICAL = 'Logical'
-    DATE = 'Date'
-    TIME = 'Time'
+    SINGLE = 'single'
+    MULTI = 'multiple'
+    QUANTITY = 'quantity'
+    CHARACTER = 'character'
+    LOGICAL = 'logical'
+    DATE = 'date'
+    TIME = 'time'
 
 
 class AltLabelMode(Enum):
-    INTERVIEW = 1
-    ANALYSIS = 2
+    INTERVIEW = 'interview'
+    ANALYSIS = 'analysis'
 
 
 def parse(list_to_parse: list, obj: object) -> list:
@@ -323,7 +323,7 @@ class Language:
 
 
 class AltLabel:
-    def __init__(self, mode=1, text="", langIdent=""):
+    def __init__(self, mode='interview', text="", langIdent=""):
         self.mode = AltLabelMode(mode)
         self.text = text
         self.langIdent = langIdent
@@ -642,23 +642,35 @@ class InterviewsQuery:
         self.date = date
 
 
-class LoopRef:
-    def __init__(self, variableIdent, valueIdent):
-        self.variable_ident = variableIdent
-        self.value_ident = valueIdent
+class LoopedDataItem:
+    def __init__(self,
+                 parent="",
+                 ident="",
+                 values=[],
+                 loopedDataItems=[],
+                 ):
+        self.parent = parent
+        self.ident = ident
+        self.values = values
+
+        # self.looped_data_items = loopedDataItems
+        if loopedDataItems is not None:
+            self.looped_data_items = [LoopedDataItem(**lr) for lr in loopedDataItems]
 
     def to_tsapi(self):
-        _dict = {'variableIdent': self.variable_ident,
-                 'valueIdent': self.value_ident}
+        _dict = {'parent': self.parent,
+                 'ident': self.ident,
+                 'values': [val.to_tsapi() for val in self.values],
+                 'loopedDataItems': [ldi.to_tsapi() for ldi in self.looped_data_items]}
         return _dict
 
 
 class DataItem:
-    def __init__(self, ident="", values=None, loopRefs=None):
+    def __init__(self, ident="", values=None, loopedDataItems=None):
         self.ident = ident
         self.values = [v for v in values]
-        if loopRefs is not None:
-            self.loop_refs = [LoopRef(**lr) for lr in loopRefs]
+        if loopedDataItems is not None:
+            self.looped_data_items = [LoopedDataItem(**lr) for lr in loopedDataItems]
 
 
 class Level:

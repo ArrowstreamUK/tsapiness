@@ -63,7 +63,7 @@ class Survey:
         }
 
         r = requests.post(
-            f'{self.connection.server}/Surveys/Interviews',
+            f'{self.connection.server}/Surveys/{s_id}/Interviews',
             headers=headers, json=json_data)
         json_r = json.loads(r.text)
         interviews = []

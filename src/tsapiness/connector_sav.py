@@ -48,10 +48,10 @@ class Survey:
 
             v_ident = m.column_names[index]
 
-            v_type = m.original_variable_types[v_ident]
+            v_type = "single"
             v_use = ""
             v_l = {'text': m.column_names_to_labels[v_ident],
-                   'altLabels': [{"mode": 1,
+                   'altLabels': [{"mode": "interview",
                                   "text": m.column_names_to_labels[v_ident],
                                   'langIdent': 'EN'}]}
             v_name = ""

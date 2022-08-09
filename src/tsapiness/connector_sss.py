@@ -168,7 +168,7 @@ class SurveyMetaData:
         v_list = []
         for var in variable_nodes:
             v_ident = _get_node_attrib(var, 'ident', "")
-            v_type = _get_node_attrib(var, 'type', "").title()
+            v_type = _get_node_attrib(var, 'type', "")
             v_use = _get_node_attrib(var, 'use', "")
             v_label = ""
             v_name = ""
