@@ -1,3 +1,4 @@
+import pandas as pd
 import pyreadstat
 
 import tsapiness.tsapi as ts
@@ -10,11 +11,14 @@ class Connection:
 
 class Survey:
 
-    def __init__(self, connection: Connection):
+    def __init__(self, connection: Connection, id_var: str, date_var: str):
+        self.id_variable = id_var
+        self.date_variable = date_var
         self.connection = connection
         self.data, self.meta = pyreadstat.read_sav(self.connection.sav_file)
         self.metadata = self.get_metadata(self.meta)
         self.interviews = self.get_interviews(self.data)
+
 
     def check_range(self, vi):
         d = self.data[vi]
@@ -26,7 +30,21 @@ class Survey:
         return _r
 
     def get_interviews(self, data):
-        interviews = data
+        interviews = []
+        raw_interview = pd.DataFrame(data)
+
+        for index, row in raw_interview.iterrows():
+            _dict = {'ident': row[self.id_variable],
+                     'date': row[self.date_variable],
+                     'complete': True,
+                     'dataItems': []}
+            interview = ts.Interview(**_dict)
+
+            for name, value in row.iteritems():
+                if not pd.isna(value):
+                    di = ts.DataItem(ident=name, values=[value])
+                    interview.data_items.append(di)
+            interviews.append(interview)
 
         return interviews
 

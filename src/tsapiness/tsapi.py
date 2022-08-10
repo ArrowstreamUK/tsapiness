@@ -1,6 +1,3 @@
-from enum import Enum
-
-
 def add(d, label, obj, apply_to_tsapi=False):
     if apply_to_tsapi:
         if obj is not None:
@@ -12,23 +9,7 @@ def add(d, label, obj, apply_to_tsapi=False):
         return d
 
 
-class VariableType(Enum):
-    SINGLE = 'single'
-    MULTI = 'multiple'
-    QUANTITY = 'quantity'
-    CHARACTER = 'character'
-    LOGICAL = 'logical'
-    DATE = 'date'
-    TIME = 'time'
-
-
-class AltLabelMode(Enum):
-    INTERVIEW = 'interview'
-    ANALYSIS = 'analysis'
-
-
 def parse(list_to_parse: list, obj: object) -> list:
-
     list_to_return = []
     if list_to_parse is not None:
         for list_item in list_to_parse:
@@ -90,7 +71,6 @@ class SurveyMetadata:
         return f'Survey({self.name})'
 
     def get_variables_list(self):
-
         variable_objects = ['variables',
                             'looped_variable',
                             'other_specify_variable',
@@ -152,7 +132,7 @@ class Label:
         alt_text = ""
         if self.alt_labels:
             for alts in self.alt_labels:
-                if alts.mode == AltLabelMode.ANALYSIS:
+                if alts.mode == 'analysis':
                     alt_text = alts.text
                     return alt_text
         return alt_text
@@ -162,7 +142,7 @@ class Label:
         alt_text = ""
         if self.alt_labels:
             for alts in self.alt_labels:
-                if alts.mode == AltLabelMode.INTERVIEW:
+                if alts.mode == 'interview':
                     return alts.text
         return alt_text
 
@@ -170,8 +150,7 @@ class Label:
         _dict = {}
         _dict = add(_dict, 'text', self.text)
         if len(self.alt_labels) > 0:
-            dict['altLabels'] = [al.to_tsapi() for al in self.alt_labels]
-
+            _dict['altLabels'] = [al.to_tsapi() for al in self.alt_labels]
         return _dict
 
 
@@ -190,7 +169,7 @@ class Variable:
 
         self.ident: str = ident
         self.ordinal: int = ordinal
-        self._type: str = type
+        self.type: str = type
         self.name: str = name
         self.label: Label = Label(**label)
         self.use: str = use
@@ -210,7 +189,7 @@ class Variable:
         _dict = add(_dict, 'label', self.label, True)
         _dict = add(_dict, 'name', self.name)
         _dict = add(_dict, 'ident', self.ident)
-        _dict = add(_dict, 'type', self.type.value)
+        _dict = add(_dict, 'type', self.type)
         _dict = add(_dict, 'values', self.variable_values, True)
         _dict = add(_dict, 'use', self.use)
         _dict = add(_dict, 'maxResponses', self.maxResponses)
@@ -231,7 +210,6 @@ class Variable:
 
         for value in self.values:
             for l_v in self.looped_variables:
-
                 looped_variable_value_list.append(l_v)
         return looped_variable_value_list
 
@@ -240,10 +218,6 @@ class Variable:
 
     def __repr__(self):
         return f'{self.ident}'
-
-    @property
-    def type(self):
-        return VariableType(self._type)
 
     @property
     def alt_labels(self):
@@ -288,7 +262,7 @@ class Variable:
             'variable_name': self.name,
             'variable_ident': self.ident,
             'variable_label': self.label_text,
-            'variable_type': self.type.name,
+            'variable_type': self.type,
             'variable_interview_label': self.label_interview,
             'variable_analysis_label': self.label_analysis,
         }
@@ -318,13 +292,14 @@ class Language:
             'name': self.name
         }
         if len(self.sub_languages) > 0:
-            _dict['subLanguage'] = self.sub_languages.to_tsapi()
+            _dict['subLanguage'] = [lang.to_tsapi()
+                                    for lang in self.sub_languages]
         return _dict
 
 
 class AltLabel:
     def __init__(self, mode='interview', text="", langIdent=""):
-        self.mode = AltLabelMode(mode)
+        self.mode = mode
         self.text = text
         self.langIdent = langIdent
 
@@ -336,7 +311,7 @@ class AltLabel:
 
     def to_tsapi(self):
         _dict = {
-            'mode': self.mode.value,
+            'mode': self.mode,
             'text': self.text,
             'langIdent': self.langIdent
         }
@@ -394,8 +369,7 @@ class Value:
         self.label = Label(**label)
         self.score = score
 
-        self.ref = None # ValueRef(**ref)
-
+        self.ref = None  # ValueRef(**ref)
 
     def to_tsapi(self):
         _dict = {}
@@ -475,7 +449,7 @@ class OtherSpecifyVariable(Variable):
         _dict = add(_dict, 'label', self.label, True)
         _dict = add(_dict, 'name', self.name)
         _dict = add(_dict, 'ident', self.ident)
-        _dict = add(_dict, 'type', self.type.value)
+        _dict = add(_dict, 'type', self.type)
         _dict = add(_dict, 'values', self.variable_values, True)
         _dict = add(_dict, 'use', self.use)
         _dict = add(_dict, 'maxResponses', self.maxResponses)
@@ -522,7 +496,7 @@ class LoopedVariable(Variable):
         _dict = add(_dict, 'label', self.label, True)
         _dict = add(_dict, 'name', self.name)
         _dict = add(_dict, 'ident', self.ident)
-        _dict = add(_dict, 'type', self.type.value)
+        _dict = add(_dict, 'type', self.type)
         _dict = add(_dict, 'values', self.variable_values, True)
         _dict = add(_dict, 'use', self.use)
         _dict = add(_dict, 'maxResponses', self.maxResponses)
@@ -537,16 +511,16 @@ class LoopedVariable(Variable):
     @property
     def parent_variable_ident(self):
         if self.loop_ref is not None:
-            self.loop_ref.variable_ident
+            return self.loop_ref.variable_ident
         else:
-            ""
+            return ""
 
     @property
     def parent_value_ident(self):
         if self.loop_ref is not None:
-            self.loop_ref.value_ident
+            return self.loop_ref.value_ident
         else:
-            ""
+            return ""
 
     def to_dict(self):
         _dict = {
@@ -554,7 +528,7 @@ class LoopedVariable(Variable):
             'variable_name': self.name,
             'variable_ident': self.ident,
             'variable_label': self.label_text,
-            'variable_type': self.type.name,
+            'variable_type': self.type,
             'variable_interview_label': self.label_interview,
             'variable_analysis_label': self.label_analysis,
             'parent_variable_label': self.parent_variable_ident,
@@ -603,7 +577,7 @@ class MetaData:
                  notAsked="", noAnswer="", variables=None, sections=None):
         self.name = name
         self.title = title
-        self.interviewCount = interviewCount
+        self.interview_count = interviewCount
         self.not_asked = notAsked
         self.no_answer = noAnswer
         self.sections = parse(sections, Section)
@@ -619,7 +593,7 @@ class MetaData:
             'noAnswer': self.no_answer,
             'variables': [var.to_tsapi() for var in self.variables],
             'sections': [sect.to_tsapi() for sect in self.sections],
-            'languages': [l.to_tsapi() for l in self.languages],
+            'languages': [lang.to_tsapi() for lang in self.languages],
         }
         return _dict
 
@@ -646,22 +620,26 @@ class LoopedDataItem:
     def __init__(self,
                  parent="",
                  ident="",
-                 values=[],
-                 loopedDataItems=[],
+                 values=None,
+                 loopedDataItems=None,
                  ):
         self.parent = parent
         self.ident = ident
-        self.values = values
+        self.values = [v for v in values]
 
-        # self.looped_data_items = loopedDataItems
         if loopedDataItems is not None:
-            self.looped_data_items = [LoopedDataItem(**lr) for lr in loopedDataItems]
+            self.looped_data_items = [LoopedDataItem(**lr)
+                                      for lr in loopedDataItems]
+        else:
+            self.looped_data_items = None
 
     def to_tsapi(self):
         _dict = {'parent': self.parent,
                  'ident': self.ident,
-                 'values': [val.to_tsapi() for val in self.values],
-                 'loopedDataItems': [ldi.to_tsapi() for ldi in self.looped_data_items]}
+                 'values': self.values}
+        if self.looped_data_items:
+            _dict['loopedDataItems'] = [ldi.to_tsapi() for ldi in
+                                        self.looped_data_items]
         return _dict
 
 
@@ -669,19 +647,36 @@ class DataItem:
     def __init__(self, ident="", values=None, loopedDataItems=None):
         self.ident = ident
         self.values = [v for v in values]
+        self.looped_data_items = []
         if loopedDataItems is not None:
-            self.looped_data_items = [LoopedDataItem(**lr) for lr in loopedDataItems]
+            self.looped_data_items = [LoopedDataItem(**lr)
+                                      for lr in loopedDataItems]
+        else:
+            self.looped_data_items = None
+
+    def to_tsapi(self):
+        _dict = {'ident': self.ident,
+                 'values': self.values}
+
+        if self.looped_data_items:
+            _dict['loopedDataItems'] = [ldi.to_tsapi()
+                                        for ldi in self.looped_data_items]
+
+        return _dict
 
 
 class Level:
     def __init__(self, ident=""):
         self.ident = ident
 
+    def to_tsapi(self):
+        _dict = {'ident': self.ident}
+        return _dict
+
 
 class HierarchicalInterview:
     def __init__(self, level=None, ident="", date="", complete=True,
                  dataItems=None, hierarchicalInterviews=None):
-
         self.level = Level(**level)
         self.ident = ident
         self.date = date
@@ -689,6 +684,16 @@ class HierarchicalInterview:
         self.data_items = parse(dataItems, DataItem)
         self.hierarchical_interviews = parse(hierarchicalInterviews,
                                              HierarchicalInterview)
+
+    def to_tsapi(self):
+        _dict = {'level': self.level.to_tsapi(),
+                 'ident': self.ident,
+                 'date': self.date,
+                 'complete': self.complete,
+                 'dataItems': [di.to_tsapi() for di in self.data_items],
+                 'hierarchicalInterviews': [hi.to_tsapi() for hi in
+                                            self.hierarchical_interviews]}
+        return _dict
 
 
 class Interview:
@@ -700,3 +705,14 @@ class Interview:
         self.data_items = parse(dataItems, DataItem)
         self.hierarchical_interviews = parse(hierarchicalInterviews,
                                              HierarchicalInterview)
+
+    def to_tsapi(self):
+        _dict = {'ident': self.ident,
+                 'date': self.date,
+                 'complete': self.complete,
+                 'dataItems': [di.to_tsapi() for di in self.data_items]}
+        if self.hierarchical_interviews:
+            _dict['hierarchicalInterviews'] = [hi.to_tsapi() for hi in
+                                               self.hierarchical_interviews]
+
+        return _dict
