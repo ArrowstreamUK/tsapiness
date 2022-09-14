@@ -41,6 +41,7 @@ conn = ts.connector_sss.Connection(sss_file=sss_file, asc_file=asc_file)
 survey_from_sss = ts.connector_sss.Survey(connection=conn)
 
 # create tsapi from sav file:
+# we have used this file https://www.pewresearch.org/global/dataset/2014-spring-global-attitudes/
 sav_file = 'data/Pew Global Attitudes Spring 2014.sav'
 conn = ts.connector_sav.Connection(sav_file=sav_file)
 # in this file the variable PSRAID holds the respid, 
