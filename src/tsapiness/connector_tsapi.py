@@ -56,13 +56,13 @@ class Survey:
 
         json_data = {
             'surveyId': s_id,
-            'start': 1,
-            'maxLength': 100,
-            'completeOnly': True,
-            'date': '2022-06-01T13:19:58.293Z',
+            # 'start': 1,
+            'maxLength': 10,
+            # 'completeOnly': True,
+            # 'date': '2022-06-01T13:19:58.293Z',
         }
 
-        r = requests.post(
+        r = requests.get(
             f'{self.connection.server}/Surveys/{s_id}/Interviews',
             headers=headers, json=json_data)
         json_r = json.loads(r.text)
