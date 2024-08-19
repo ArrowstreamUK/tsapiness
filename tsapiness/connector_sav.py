@@ -19,7 +19,6 @@ class Survey:
         self.metadata = self.get_metadata(self.meta)
         self.interviews = self.get_interviews(self.data)
 
-
     def check_range(self, vi):
         d = self.data[vi]
 
@@ -92,6 +91,3 @@ class Survey:
             _v.variable_values.range = value_range
             v_list.append(_v)
         return v_list
-
-
-

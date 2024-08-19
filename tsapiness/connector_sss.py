@@ -19,7 +19,7 @@ class Survey:
     def get_interviews(self, file: str) -> list:
 
         def transform_list(input_list: list) -> list:
-            return[{'value': item} for item in input_list if item.strip()]
+            return [{'value': item} for item in input_list if item.strip()]
 
         interviews = []
         with open(file) as f:
@@ -193,4 +193,3 @@ class SurveyMetaData:
             _v.variable_values = v_values
             v_list.append(_v)
         return v_list
-
