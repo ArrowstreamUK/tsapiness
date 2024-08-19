@@ -12,10 +12,15 @@ class Survey:
 
     def __init__(self, connection: Connection):
         self.connection = connection
-        self.metadata = SurveyMetaData(self.connection.sss_file)
+        self._metadata = SurveyMetaData(self.connection.sss_file)
+        self.metadata = self._metadata.survey
         self.interviews = self.get_interviews(self.connection.asc_file)
 
     def get_interviews(self, file: str) -> list:
+
+        def transform_list(input_list: list) -> list:
+            return[{'value': item} for item in input_list if item.strip()]
+
         interviews = []
         with open(file) as f:
             lines = f.readlines()
@@ -24,15 +29,15 @@ class Survey:
             for line in lines:
                 # create Interview
                 count_row_id += 1
-                i = {'ident': count_row_id,
+                i = {'interviewId': count_row_id,
                      'date': None,
                      'complete': True,
-                     'dataItems': []
+                     'responses': []
                      }
                 iv = ts.Interview(**i)
 
                 # populate dataitems
-                for loc in self.metadata.variable_positions:
+                for loc in self._metadata.variable_positions:
                     start = 0
                     finish = 0
                     subfields = 0
@@ -54,10 +59,12 @@ class Survey:
                         datapoints = [datapoint[i:i + width] for i in
                                       range(0, len(datapoint), width)]
                     else:
-                        datapoints.append(datapoint)
+                        datapoints.append(datapoint.strip())
 
-                    di = ts.DataItem(ident=loc['ident'], values=datapoints)
-                    iv.data_items.append(di)
+                    datapoints = transform_list(datapoints)
+                    di = ts.VariableData(variableId=loc['ident'],
+                                         data=datapoints)
+                    iv.responses.append(di)
                 interviews.append(iv)
         return interviews
 
@@ -93,15 +100,14 @@ class SurveyMetaData:
         v_ident = _get_node_attrib(node, 'ident', "")
         v_code = _get_node_attrib(node, 'code', "")
         v_score = _get_node_attrib(node, 'score', 0)
-        v_ref = None
 
         v_label = node.text
         v_label = {'text': v_label}
         _v = ts.Value(label=v_label,
-                      ident=v_ident,
+                      valueId=v_ident,
                       code=v_code,
                       score=v_score,
-                      ref=v_ref)
+                      )
 
         return _v
 
@@ -181,7 +187,7 @@ class SurveyMetaData:
                     attr) if attr.tag == 'values' else v_values
 
             v_label = {'text': v_label}
-            _v = ts.Variable(ident=v_ident, type=v_type, use=v_use,
+            _v = ts.Variable(variableId=v_ident, type=v_type, use=v_use,
                              label=v_label, name=v_name)
 
             _v.variable_values = v_values

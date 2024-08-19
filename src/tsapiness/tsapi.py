@@ -744,10 +744,17 @@ class VariableDataItem:
     def to_tsapi(self):
         _dict = {
             'value': self.value,
-            'state': self.state,
-            'loopedVariableData': [d.to_tsapi() for d
-                                   in self.loopedVariableData],
+            #'state': self.state,
+
+            #'loopedVariableData': [d.to_tsapi() for d
+                                   #in self.loopedVariableData],
         }
+        if self.state != "":
+            _dict['state'] = self.state
+
+        if self.loopedVariableData:
+            _dict['loopedVariableData'] = [d.to_tsapi() for d
+                                           in self.loopedVariableData]
         return _dict
 
     def __str__(self):
