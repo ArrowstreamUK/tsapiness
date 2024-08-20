@@ -11,9 +11,7 @@ class Connection:
 
 class Survey:
 
-    def __init__(self, connection: Connection, id_var: str, date_var: str):
-        self.id_variable = id_var
-        self.date_variable = date_var
+    def __init__(self, connection: Connection):
         self.connection = connection
         self.data, self.meta = pyreadstat.read_sav(self.connection.sav_file)
         self.metadata = self.get_metadata(self.meta)
@@ -33,16 +31,16 @@ class Survey:
         raw_interview = pd.DataFrame(data)
 
         for index, row in raw_interview.iterrows():
-            _dict = {'ident': row[self.id_variable],
-                     'date': row[self.date_variable],
+            _dict = {'interviewId': row.ID,
+                     'date': "",
                      'complete': True,
-                     'dataItems': []}
+                     'responses': []}
             interview = ts.Interview(**_dict)
 
-            for name, value in row.iteritems():
+            for name, value in row.items():
                 if not pd.isna(value):
-                    di = ts.DataItem(ident=name, values=[value])
-                    interview.data_items.append(di)
+                    di = ts.VariableData(variableId=name, data=[{'value': value}])
+                    interview.responses.append(di)
             interviews.append(interview)
 
         return interviews
@@ -63,31 +61,31 @@ class Survey:
 
         for index in range(number_of_variables):
 
-            v_ident = m.column_names[index]
+            v_id = m.column_names[index]
 
             v_type = "single"
             v_use = ""
-            v_l = {'text': m.column_names_to_labels[v_ident],
+            v_l = {'text': m.column_names_to_labels[v_id],
                    'altLabels': [{"mode": "interview",
-                                  "text": m.column_names_to_labels[v_ident],
-                                  'langIdent': 'EN'}]}
+                                  "text": m.column_names_to_labels[v_id],
+                                  'languageId': 'EN'}]}
             v_name = ""
 
-            _v = ts.Variable(ident=v_ident, type=v_type, use=v_use,
+            _v = ts.Variable(variableId=v_id, type=v_type, use=v_use,
                              label=v_l, name=v_name)
 
-            if v_ident in m.variable_value_labels:
+            if v_id in m.variable_value_labels:
                 # do stuff
                 values = []
-                for key, value in m.variable_value_labels[v_ident].items():
-                    value_item = ts.Value(ident=key,
+                for key, value in m.variable_value_labels[v_id].items():
+                    value_item = ts.Value(valueId=key,
                                           code=key,
                                           label={'text': value})
 
                     values.append(value_item)
 
                 _v.variable_values.values = values
-            value_range = self.check_range(v_ident)
-            _v.variable_values.range = value_range
+            # value_range = self.check_range(v_id)
+            # _v.variable_values.range = value_range
             v_list.append(_v)
         return v_list
