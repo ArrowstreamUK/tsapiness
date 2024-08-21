@@ -39,7 +39,8 @@ class Survey:
 
             for name, value in row.items():
                 if not pd.isna(value):
-                    di = ts.VariableData(variableId=name, data=[{'value': value}])
+                    di = ts.VariableData(variableId=name,
+                                         data=[{'value': value}])
                     interview.responses.append(di)
             interviews.append(interview)
 

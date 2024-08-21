@@ -12,7 +12,7 @@ survey_from_sav = ts.connector_sav.Survey(connection=conn)
 survey_to_export = survey_from_sav
 
 
-with open(r'data/metadata_sav.json', 'w', encoding='utf8') as f:
+with open(r'../data/metadata_sav.json', 'w', encoding='utf8') as f:
     json.dump(survey_to_export.metadata.to_tsapi(),
               f,
               indent=4,
