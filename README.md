@@ -1,5 +1,7 @@
 # tsapiness
 
+Please note that this library is currently unsupported
+
 tsapiness (pronounced "zappiness") aims to make the TSAPI easy to access via Python. 
 
 Currently, the project provides a python representation of the TSAPI so that the data can be manipulated accordingly. 
